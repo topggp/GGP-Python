@@ -29,7 +29,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     stopping_criteria='change'  #Stopping Criteria:  'change'  'kktnorm'
 
     if 'Top_Rib' == BC:
-        starting_guess = 'Top_Rib'  # Starting guess: Crosses, Top_Rib, ...
+        starting_guess = 'Top_Rib'  # Starting guess: Crosses, Top_Rib
     else:
         starting_guess = 'Crosses'
 
@@ -211,25 +211,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         ff = int(np.floor(((nelx / 4) + Rint1 + (((nelx / 4) - Rint1 - Rint2) / 2) - (nelx / 80) + 1)))  # white square dimensions
         g = int(np.floor(((nelx / 4) + Rint1 + (((nelx / 4) - Rint1 - Rint2) / 2) + (nelx / 80))))
 
-        '''
-        l_ini = np.sqrt(volfrac*nelx*nely/(0.5*nX*nY))     # initial length of component
-        [xElts, yElts] = np.meshgrid(np.linspace(1 / (nX + 1) * nelx, nX / (nX + 1) * nelx, nX),np.linspace(1 / (nY + 1) * nely, nY / (nY + 1) * nely, nY))
-
-
-
-
-        xElts = np.reshape(xElts.T, (1, xElts.size))
-        yElts = np.reshape(yElts.T, (1, yElts.size))
-
-        xElts = xElts(~isnan(xElts))
-        yElts = yElts(~isnan(yElts))
-
-        n_c = xElts.shape[1]
-        x = np.concatenate((xElts,yElts,np.zeros((1, n_c)),l_ini * np.ones((2, n_c))), axis = 0)
-        n_var = x.size
-        x = np.reshape(x, n_var, 1)
-        '''
-
         emptyelts = []  # Obligatory empty elements
         fullelts = []  # Obligatory full elements
         passivewhite = np.zeros((nely,nelx))
@@ -341,43 +322,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         fixeddofs1 = np.arange((2 * (nely - a + 1 + 1) - 1), (2 * (nely + 1 - 1) - 1))  # Fixed degrees of freedom
         fixeddofs2 = np.arange((2 * (nely - a + 1 + 1)), (2 * (nely + 1 - 1)))
         fixeddofs = np.concatenate([[fixeddofs1], [fixeddofs2]])
-
-        '''            
-        passivewhite=np.zeros((nely,nelx))
-        passiveblack=np.zeros((nely,nelx))
-
-        for ely2 in np.arange(1,nely):            # white external round
-            for elx2 in np.arange(1,nelx):
-                if np.sqrt((ely2-R) ** 2+(elx2-d) ** 2) > R:
-                    passivewhite[ely2,elx2] = 1
-                    #x[ely2,elx2] = 0.001
-        for ely3 in np.arange(1,nely):            # white external round
-            for elx3 in np.arange(1,nelx):
-                if np.sqrt((ely3-((3*nely)/5)) ** 2+(elx3-(nelx/4)) ** 2) <= Rint1:
-                    passivewhite[ely3,elx3] = 1
-                    #x[ely3,elx3] = 0.001
-        for ely4 in np.arange(1,nely):            # white external round
-            for elx4 in np.arange(1,nelx):
-                if np.sqrt((ely4-((3*nely)/5)) ** 2+(elx4-(nelx/2)) ** 2) <= Rint2:
-                    passivewhite[ely4,elx4] = 1
-                    #x[ely4,elx4] = 0.001
-        for ely5 in np.arange(1,nely):            # white external round
-            for elx5 in np.arange(1,nelx):
-                if np.sqrt((ely5-((3*nely)/5)) ** 2+(elx5-((3*nelx)/4)) ** 2) <= Rint3:
-                    passivewhite[ely5,elx5] = 1
-                    #x[ely5,elx5] = 0.001
-        for ely6 in np.arange(int((nely/10)+1),int((9*nely)/10)):
-            for elx6 in np.arange(ff,g):
-                passivewhite[ely6,elx6] = 1
-                #x[elx6,elx6] = 0.001
-
-
-        fixeddofs1 = np.arange((2 * (nely-a+1+1)-1), (2 * (nely+1-1)-1))    #Fixed degrees of freedom
-        fixeddofs2 = np.arange((2 * (nely-a+1+1)),(2 * (nely+1-1)))
-        fixeddofs = np.concatenate([[fixeddofs1],[fixeddofs2]])
-        emptyelts = np.where(passivewhite == 1)[0]      #Obligatory empty elements
-        fullelts = np.where(passiveblack == 1)[0]      #Obligatory full elements
-        '''
     else:
         print("BC string should be a valid entry: 'MBB','L-Shape','Short_Cantiliever','Top_Rib'")
         sys.exit()
@@ -460,7 +404,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     d = 0 * np.ones(m)
     a0 = 1
     a = np.zeros(m)
-    maxiteration = 300
     kkttol = 0.001
     changetol = 0.001
     kktnorm = kkttol + 10
@@ -471,7 +414,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     cvec = np.zeros(maxiteration)       #Vector with objective function for every iteration
     vvec = np.zeros(maxiteration)       #Vector with the volume fraction for every iteration
     kktnormvec = np.zeros(maxiteration) #Vector with the kktnorm for every iteration
-    plot_rate = 10                       #HOW OFTEN PLOTS THE RESULTS
+    plot_rate = 1                       #HOW OFTEN PLOTS THE RESULTS
 
     # initialize variables for plot
     tt = np.arange(0, 2 * np.pi, 0.005)
@@ -569,14 +512,33 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         drho_dY=drho_ddelta * ddelta_dY
         drho_dT=drho_ddelta * ddelta_dT
         drho_dL=drho_ddelta * ddelta_dL
+        
+        
         drho_dh=drho_ddelta * ddelta_dh   
-        rho[emptyelts]=0
-        rho[fullelts]=1
-        #E = E + 4 * E ** 3 - 7 * E ** 4 + 3 * E ** 5
+
+
+
+
+
+
+        xPhys = np.ravel(rho)
+        
+        xPhys[emptyelts]=0
+        xPhys[fullelts]=1
+
+
+
+
+        xPhys = np.reshape(xPhys, (nelx, nely)).T
+        
+        
+        E = np.ravel(E)
+
         E[emptyelts]=p['Emin']
         E[fullelts]=p['E0']
-        xPhys=rho
-        E=np.reshape(np.ravel(E),(nelx,nely)).T
+
+
+        E=np.reshape(E,(nelx,nely)).T
 
         # Uses 0.8s
         ### FE ANALYSIS
@@ -634,39 +596,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         df0dx=(np.ravel(dc) / (c + 1) * (np.ravel(upper_bound) - np.ravel(lower_bound)))
         dfdx=(np.ravel(dv).T / volfrac) * 100.0 * (np.ravel(upper_bound) - np.ravel(lower_bound)).T
 
-        if 'Top_Rib' == BC:
-            '''
-            
-            den?
-            compare matlab den with my xPhys
-            
-        
-            U1 = U(:,1) ; U2 = U(:,2) ;
-            ce1 = sum((U1(edofMat)*KE).*U1(edofMat),2);
-            ce2 = sum((U2(edofMat)*KE).*U2(edofMat),2);
-            ce = ce1 + ce2 ;
-            c = sum(sum((Emin+den.^penal*(E0-Emin)).*ce));
-            dc = -penal*(E0-Emin)*grad_den'*(den.^(penal-1).*ce);
-            cst=(sum(den(:))-mMax)/mMax*100;
-            dcst=sum(grad_den)/mMax*100;
-            dc=dc.*(Xmax-Xmin);dcst=dcst.*((Xmax-Xmin)');
-            change=max(abs(X_old-X));
-            X_old=X;
-            f0val=c/10000;
-            fval=cst;
-            df0dx=dc(:)/10000;
-            dfdx_=dcst(:)';
-            '''
-
-
-
-        if iteration == 1000:
-            print(upp)
-            print(upp.shape)
-
-            aaaaa
-
-
         # output Vectors
         outvector1=[iteration,f0val,fval]
         outvector2=xval
@@ -678,7 +607,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         if iteration % plot_rate == 0:
             
             ## Density plot
-            im1.set_array(-xPhys.reshape((nelx, nely)).T)
+            im1.set_array(-xPhys)
             
             ## Component plot        
             Xc=Xg[np.arange(0,len(Xg),6)]
@@ -739,7 +668,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
             stop_cond=iteration < maxiteration and change > changetol
     
     ## Density plot
-    im1.set_array(-xPhys.reshape((nelx, nely)).T)
+    im1.set_array(-xPhys)
     
     ## Component plot        
     Xc=Xg[np.arange(0,len(Xg),6)]
@@ -822,7 +751,6 @@ def lgwt(N,a,b):
     w = (b - a) / ((1 - y **2) * Lp ** 2) * (N2 / N1) ** 2
     return x, w
 
-# Element stiffness matrix
 def lk():
     E=1
     nu=0.3
@@ -987,6 +915,8 @@ def model_updateM(delta,p,X):
         dhatdelta_dm = p['gammac'] * np.multiply(delta, m ** (p['gammac'] - 1))
         dE_ddelta=p['penalty'] *(p['E0'] - p['Emin']) * dhatdelta_ddelta * drho_dhatdelta * rho ** (p['penalty'] - 1)
         dE_dm=p['penalty'] * (p['E0'] - p['Emin']) * dhatdelta_dm * drho_dhatdelta * rho ** (p['penalty'] - 1)
+
+
     elif 'GP' == p['method']:
         hatdelta= np.multiply(delta,m ** p['gammac'])
         E,dE_dhatdelta = Aggregation_Pi(hatdelta,p)
@@ -1000,6 +930,7 @@ def model_updateM(delta,p,X):
         dE_dm=p['E0'] * dE_dhatdelta * dhatdelta_dm
     else:
         sys.exit()
+
     return E,dE_ddelta,dE_dm
 
 def model_updateV(delta,p,X):
@@ -1437,11 +1368,11 @@ def kktcheck(m, n, x, y, z, lam, xsi, eta, mu, zet, s, xmin, xmax, df0dx, fval, 
 # The real main driver
 if __name__ == "__main__":
     # Input parameters
-    nelx=80
+    nelx=160
     nely=40
-    volfrac=0.4
-    settings='GGP'          #Method:   'GGP'   'MMC'   'MNA'   'GP'
-    BC='Short_Cantiliever'                #Boundary Conditions:  'MBB'  'Short_Cantiliever'  'L-Shape'  'Top_Rib'
+    volfrac=0.25
+    settings='MMC'          #Method:   'GGP'   'MMC'   'MNA'   'GP'
+    BC='Top_Rib'                #Boundary Conditions:  'MBB'  'Short_Cantiliever'  'L-Shape'  'Top_Rib'
     maxiteration=300
     if len(sys.argv)>1: nelx = int(sys.argv[1])
     if len(sys.argv)>2: nely = int(sys.argv[2])
