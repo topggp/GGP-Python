@@ -3,15 +3,15 @@
 close all
 clear
 volfrac=.4;
-nelx=80;
-nely=40;
-settings='MNA'; %GGP  %MMC  %MNA  %GP
-BC='L-shape';   %L-shape  %Short_Cantiliever  %MBB
+nelx=60;
+nely=30;
+settings='GGP'; %GGP  %MMC  %MNA  %GP
+BC='Short_Cantiliever';   %L-shape  %Short_Cantiliever  %MBB
 stopping_criteria='change';
 switch settings
     case 'GGP'
         p.method='MMC';%MMC %MNA %GP
-        q=2;%q=1
+        q=1;%q=1
         p.zp=1 ;% parameter for p-norm/mean regularization
         p.alp=1; %parameter for MMC
         p.epsi=0.866;% parameter for MMC
@@ -31,11 +31,11 @@ switch settings
         ncx=1; % number of components in the x direction
         ncy=1; % number of components in the y direction
         Ngp=2; % number of Gauss point per sampling window
-        R=0.25; % radius of the sampling window (infty norm)
+        R=0.5; % radius of the sampling window (infty norm)
         initial_d=0.5;
     case 'MMC'
         p.method='MMC';%MMC %MNA %GP
-        q=2;%q=1
+        q=1;%q=1
         p.zp=1 ;% parameter for p-norm/mean regularization
         p.alp=1; %parameter for MMC
         p.epsi=0.7;% parameter for MMC
@@ -43,19 +43,19 @@ switch settings
         p.deltamin=1e-6; %parameter for GP
         p.r=1.5;%parameter for GP
         minh=1;
-        p.sigma=1.5;%parameter for MNA
+        p.sigma=1;%parameter for MNA
         p.gammav=1;%parameter for GP
         p.gammac=3;%parameter for GP
         p.penalty=3;%parameter for MNA
-        p.aggregation='KS'; %parameter for the aggregation function to be used
+        p.aggregation='KSl'; %parameter for the aggregation function to be used
         % IE= Induced Exponential % KS= KS function %KSl= lowerbound KS function
         % p-norm %p-mean
         p.ka=4; % parameter for the aggregation constant
-        p.saturation=false; % switch for saturation
+        p.saturation=true; % switch for saturation
         ncx=1; % number of components in the x direction
         ncy=1; % number of components in the y direction
         Ngp=2; % number of Gauss point per sampling window
-        R=sqrt(3)/2; % radius of the sampling window (infty norm)
+        R=0.5; % radius of the sampling window (infty norm)
         initial_d=1; % component initial mass
     case 'MNA'
         p.method='MNA';%MMC%MNA %GP
@@ -67,7 +67,7 @@ switch settings
         p.deltamin=1e-6; %parameter for GP
         p.r=3;%parameter for GP
         minh=1;
-        p.sigma=2;%parameter for MNA
+        p.sigma=1;%parameter for MNA
         p.gammav=1;%parameter for GP
         p.gammac=3;%parameter for GP
         p.penalty=3;%parameter for MNA
@@ -75,11 +75,11 @@ switch settings
         % IE= Induced Exponential % KS= KS function %KSl= lowerbound KS function
         % p-norm %p-mean
         p.ka=10; % parameter for the aggregation constant
-        p.saturation=false; % switch for saturation
+        p.saturation=true; % switch for saturation
         ncx=1; % number of components in the x direction
         ncy=1; % number of components in the y direction
-        Ngp=1; % number of Gauss point per sampling window
-        R=sqrt(1)/2; % radius of the sampling window (infty norm)
+        Ngp=2; % number of Gauss point per sampling window
+        R=0.5; % radius of the sampling window (infty norm)
         initial_d=0.5;
     case 'GP'
         p.method='GP';%MMC%MNA %GP
@@ -89,7 +89,7 @@ switch settings
         p.epsi=0.7;% parameter for MMC
         p.bet=1e-3; %parameter for MMC
         p.deltamin=1e-6; %parameter for GP
-        p.r=1.5;%parameter for GP
+        p.r=0.5;%parameter for GP
         minh=1;
         p.sigma=1.5;%parameter for MNA
         p.gammav=1;%parameter for GP
@@ -99,18 +99,18 @@ switch settings
         % IE= Induced Exponential % KS= KS function %KSl= lowerbound KS function
         % p-norm %p-mean
         p.ka=10; % parameter for the aggregation constant
-        p.saturation=false; % switch for saturation
+        p.saturation=true; % switch for saturation
         ncx=1; % number of components in the x direction
         ncy=1; % number of components in the y direction
         Ngp=2; % number of Gauss point per sampling window
-        R=sqrt(1)/2; % radius of the sampling window (infty norm)
+        R=0.5; % radius of the sampling window (infty norm)
         initial_d=0.5;  
 end
 cross_starting_guess=true;
-rs=replace(num2str(R,'%3.2f'),'.','_');
-folder_name=['Optimization_history_',BC,settings,p.method,'nelx_',num2str(nelx),'nely_',num2str(nely),'_R_',rs,'_Ngp_',num2str(Ngp),'_SC_',stopping_criteria];
+%rs=replace(num2str(R,'%3.2f'),'.','_');
+%folder_name=['Optimization_history_',BC,settings,p.method,'nelx_',num2str(nelx),'nely_',num2str(nely),'_R_',rs,'_Ngp_',num2str(Ngp),'_SC_',stopping_criteria];
 %mkdir(folder_name)
-Path=[folder_name,'/'];
+%Path=[folder_name,'/'];
 
 %% MATERIAL PROPERTIES
 p.E0 = 1;
@@ -164,7 +164,7 @@ switch BC
         fixed_dir=[ones(nely+1,1);2];
         fixeddofs=2*(fixednodes-1)+fixed_dir;
         emptyelts=[]; 
-        fullelts = [];
+        fullelts = [];        
     case 'Short_Cantiliever'
         excitation_node=find((Xx==max(Xx))&(Yy==fix(0.5*min(Yy)+0.5*max(Yy))));     % Number of the node where the force is applied
         excitation_direction=2;         %Axis in which the force is applied
@@ -209,7 +209,7 @@ else
     initial_Lh_ratio=nelx/nely;
     hc=repmat(sqrt(1/initial_Lh_ratio*(nelx*nely)/ncx/ncy),length(Xc),1);
     Lc=initial_Lh_ratio*hc;
-    Tc=[0*pi/4*ones(ncx*ncy,1)];    %WTF 0*pi?????
+    Tc=[0*pi/4*ones(ncx*ncy,1)];
 end
 
 Mc=initial_d*ones(size(Xc));
@@ -343,22 +343,16 @@ while  stop_cond
     drho_dT=drho_ddelta.*ddelta_dT;
     drho_dL=drho_ddelta.*ddelta_dL;
     drho_dh=drho_ddelta.*ddelta_dh;
-       
-
-    
     
     xPhys=full(reshape(rho(:),nely,nelx));
     E=full(reshape(E(:),nely,nelx));
-
-
-    
+ 
     %passive elements
     xPhys(emptyelts) = 0;
     xPhys(fullelts) = 1;
     E(emptyelts) = p.Emin;
     E(fullelts) = p.E0;
-  
-    
+
     %% FE-ANALYSIS    
     sK = reshape(KE(:)*(E(:)'),64*nelx*nely,1);
     K = sparse(iK,jK,sK);

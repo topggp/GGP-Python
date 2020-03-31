@@ -5,6 +5,8 @@ Created on Fri May 24 13:45:15 2019
 @author: João Matos
 """
 
+# Forces index
+
 #from __future__ import division
 import sys
 
@@ -36,7 +38,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     p={}
     if settings=='GGP':
         p['method']='MMC'   #Method:   'MMC'  'MNA'  'GP'
-        q=2                 #q=1
+        q=1                 #q=1
         p['zp']=1           #parameter for p-norm/mean regularization
         p['alp']=1          #parameter for MMC
         p['epsi']=0.866     #parameter for MMC
@@ -49,60 +51,60 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         ncx=1           #number of components in the x direction
         ncy=1           #number of components in the y direction
         Ngp=2           #number of Gauss point per sampling window
-        R=0.25          #radius of the sampling window (infty norm)
-        initial_d=.5    #component initial mass
+        R=0.5          #radius of the sampling window (infty norm)
+        initial_d=0.5    #component initial mass
     elif settings=='MMC':
         p['method']='MMC'   #'MMC'  'MNA'  'GP'
-        q=2                 #q=1
+        q=1                 #q=1
         p['zp']=1           #parameter for p-norm/mean regularization
         p['alp']=1          #parameter for MMC
         p['epsi']=0.866     #parameter for MMC
         p['bet']=1e-3       #parameter for MMC
         minh=1              # minimum height of a component
-        p['aggregation']='KS'   #parameter for the aggregation function to be used
+        p['aggregation']='KSl'   #parameter for the aggregation function to be used
         #'IE'-Induced Exponential  'KS'-KS function  'KSl'-Lowerbound KS function 'p-norm'  'p-mean'
         p['ka']=10          #parameter for the aggregation constant
-        p['saturation']=False    #switch for saturation
+        p['saturation']=True    #switch for saturation
         ncx=1               #number of components in the x direction
         ncy=1               #number of components in the y direction
         Ngp=2               #number of Gauss point per sampling window
-        R=math.sqrt(3)/2    #radius of the sampling window (infty norm)
-        initial_d=1         #component initial mass
+        R=0.5    #radius of the sampling window (infty norm)
+        initial_d=0.5         #component initial mass
     elif settings=='MNA':
         p['method']='MNA'    #'MMC'  'MNA'  'GP'
         q=1             #q=1
         p['zp']=1           #parameter for p-norm/mean regularization
         minh=1              # minimum height of a component
-        p['sigma']=2        #parameter for MNA
+        p['sigma']=1        #parameter for MNA
         p['penalty']=3      #parameter for MNA
         p['gammav']=1       #parameter for GP
         p['gammac']=3       #parameter for GP
         p['aggregation']='KSl'    #parameter for the aggregation function to be used
         #'IE'-Induced Exponential  'KS'-KS function  'KSl'-Lowerbound KS function 'p-norm'  'p-mean'
         p['ka']=10           #parameter for the aggregation constant
-        p['saturation']=False     #switch for saturation
+        p['saturation']=True     #switch for saturation
         ncx=1               #number of components in the x direction
         ncy=1               #number of components in the y direction
-        Ngp=1               #number of Gauss point per sampling window
-        R=math.sqrt(1)/2    #radius of the sampling window (infty norm)
+        Ngp=2               #number of Gauss point per sampling window
+        R=0.5               #radius of the sampling window (infty norm)
         initial_d=0.5       #component initial mass
     elif settings=='GP':
         p['method']='GP'    #'MMC'  'MNA'  'GP'
         q=1                 #q=1
         p['zp']=1           #parameter for p-norm/mean regularization
         p['deltamin']=1e-6  #parameter for GP
-        p['r']=1.5          #parameter for GP
+        p['r']=0.5          #parameter for GP
         minh=1              # minimum height of a component
         p['gammav']=1       #parameter for GP
         p['gammac']=3       #parameter for GP
         p['aggregation']='KSl'  #parameter for the aggregation function to be used
         #'IE'-Induced Exponential  'KS'-KS function  'KSl'-Lowerbound KS function 'p-norm'  'p-mean'
         p['ka']=10          #parameter for the aggregation constant
-        p['saturation']=False   #switch for saturation
+        p['saturation']=True   #switch for saturation
         ncx=1               #number of components in the x direction
         ncy=1               #number of components in the y direction
         Ngp=2               #number of Gauss point per sampling window
-        R=math.sqrt(1)/2    #radius of the sampling window (infty norm)
+        R=0.5    #radius of the sampling window (infty norm)
         initial_d=0.5       #component initial mass
     else:
         print('settings string should be a valid entry: ''GGP'',''MMC'',''MNA'',''GP''') 
@@ -214,51 +216,52 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         emptyelts = []  # Obligatory empty elements
         fullelts = []  # Obligatory full elements
         passivewhite = np.zeros((nely,nelx))
-
+        
         ely2 = 0
-        while ely2 < nely:                 ###white external round
+        while ely2 < nely:  ###white external round
             elx2 = 0
             while elx2 < nelx:
-                if np.sqrt((ely2 - R)**2 + (elx2 - d)** 2) > R:
-                    emptyelts.append(nely*elx2+ely2)
+                if np.sqrt((ely2+1 - R) ** 2 + (elx2+1 - d) ** 2) > R:
+                    emptyelts.append(nely * elx2 + ely2)
                     passivewhite[ely2, elx2] = 1
-                    #x[ely2, elx2] = 0.001
+                    # x[ely2, elx2] = 0.001
                 elx2 = elx2 + 1
             ely2 = ely2 + 1
-
+    
         ely3 = 0
         while ely3 < nely:  ###white external round
             elx3 = 0
             while elx3 < nelx:
-                if np.sqrt((ely3-((3*nely)/5))**2+(elx3-(nelx/4))**2) <= Rint1:
-                    emptyelts.append(nely*elx3+ely3)
+                if np.sqrt((ely3+1 - ((3 * nely) / 5)) ** 2 + (elx3+1 - (nelx / 4)) ** 2) <= Rint1:
+                    emptyelts.append(nely * elx3 + ely3)
                     passivewhite[ely3, elx3] = 1
                     # x[ely3, elx3] = 0.001
                 elx3 = elx3 + 1
             ely3 = ely3 + 1
-
+    
         ely4 = 0
         while ely4 < nely:  ###white external round
             elx4 = 0
             while elx4 < nelx:
-                if np.sqrt((ely4 - ((3 * nely) / 5)) ** 2 + (elx4 - (nelx / 2)) ** 2) <= Rint2:
-                    emptyelts.append(nely*elx4+ely4)
+                if np.sqrt((ely4+1 - ((3 * nely) / 5)) ** 2 + (elx4+1 - (nelx / 2)) ** 2) <= Rint2:
+                    emptyelts.append(nely * elx4 + ely4)
                     passivewhite[ely4, elx4] = 1
                     # x[ely4, elx4] = 0.001
                 elx4 = elx4 + 1
             ely4 = ely4 + 1
-
+    
         ely5 = 0
         while ely5 < nely:  ###white external round
             elx5 = 0
             while elx5 < nelx:
-                if np.sqrt((ely5 - ((3 * nely) / 5)) ** 2 + (elx5 - (3*nelx / 4)) ** 2) <= Rint3:
-                    emptyelts.append(nely*elx5+ely5)
+                if np.sqrt((ely5+1 - ((3 * nely) / 5)) ** 2 + (elx5+1 - (3 * nelx / 4)) ** 2) <= Rint3:
+                    emptyelts.append(nely * elx5 + ely5)
                     passivewhite[ely5, elx5] = 1
                     # x[ely5, elx5] = 0.001
                 elx5 = elx5 + 1
             ely5 = ely5 + 1
-
+    
+    
         ely6 = int(nely / 10)
         while ely6 < 9 * nely / 10:  ###white external round
             elx6 = ff - 1
@@ -270,32 +273,32 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
             ely6 = ely6 + 1
 
         ###LOADS AND SUPPORTS
-        dinx1 = int(2 * (nely - a + 1) - 1)                        # above
-        diny1 = int(2 * (nely - a + 1))
-        dinx2 = int(2 * ((nely + 1) * (d) + 1) - 1)
-        diny2 = int(2 * ((nely + 1) * (d) + 1))
-        dinx3 = int(2 * ((nely + 1) * (2 * d) + nely - a + 1) - 1)
-        diny3 = int(2 * ((nely + 1) * (2 * d) + nely - a + 1))
-        dinx4 = int(2 * ((nely + 1) * (nelx) + nely - b + 1) - 1)
-        diny4 = int(2 * ((nely + 1) * (nelx) + nely - b + 1))
-
-        dout1 = int(2 * ((nely + 1) * ff + (nely / 10) + 1))
-        dout3 = int(2 * ((nely + 1) * g + (nely / 10) + 1))
-
-        dinx5 = int(2 * ((nely + 1)) - 1)                           # below
-        diny5 = int(2 * ((nely + 1)))
-        dinx6 = int(2 * ((nely + 1) * (d + 1)) - 1)
-        diny6 = int(2 * ((nely + 1) * (d + 1)))
-        dinx7 = int(2 * ((nely + 1) * (2 * d + 1)) - 1)
-        diny7 = int(2 * ((nely + 1) * (2 * d + 1)))
-        dinx8 = int(2 * ((nely + 1) * (nelx + 1)) - 1)
-        diny8 = int(2 * ((nely + 1) * (nelx + 1)))
-
-        dout2 = int(2 * ((nely + 1) * ff + (9 * nely) / 10))
-        dout4 = int(2 * ((nely + 1) * g + (9 * nely) / 10))
-
+        dinx1 = int(2 * (nely - a + 1) - 1) - 1  # above
+        diny1 = int(2 * (nely - a + 1)) - 1
+        dinx2 = int(2 * ((nely + 1) * (d) + 1) - 1) - 1
+        diny2 = int(2 * ((nely + 1) * (d) + 1)) - 1
+        dinx3 = int(2 * ((nely + 1) * (2 * d) + nely - a + 1) - 1) - 1
+        diny3 = int(2 * ((nely + 1) * (2 * d) + nely - a + 1)) - 1
+        dinx4 = int(2 * ((nely + 1) * (nelx) + nely - b + 1) - 1) - 1
+        diny4 = int(2 * ((nely + 1) * (nelx) + nely - b + 1)) - 1
+    
+        dout1 = int(2 * ((nely + 1) * ff + (nely / 10) + 1)) - 1
+        dout3 = int(2 * ((nely + 1) * g + (nely / 10) + 1)) - 1
+    
+        dinx5 = int(2 * ((nely + 1)) - 1)  - 1 # below
+        diny5 = int(2 * ((nely + 1))) - 1
+        dinx6 = int(2 * ((nely + 1) * (d + 1)) - 1) - 1
+        diny6 = int(2 * ((nely + 1) * (d + 1))) - 1
+        dinx7 = int(2 * ((nely + 1) * (2 * d + 1)) - 1) - 1
+        diny7 = int(2 * ((nely + 1) * (2 * d + 1))) - 1
+        dinx8 = int(2 * ((nely + 1) * (nelx + 1)) - 1) - 1
+        diny8 = int(2 * ((nely + 1) * (nelx + 1))) - 1
+    
+        dout2 = int(2 * ((nely + 1) * ff + (9 * nely) / 10)) - 1
+        dout4 = int(2 * ((nely + 1) * g + (9 * nely) / 10)) - 1
+    
         f = np.zeros((ndof, 1))  # Force array Initialization
-        f[dinx1] = 1                            # above
+        f[dinx1] = 1  # above
         f[diny1] = 1
         f[dinx2] = 1
         f[diny2] = 1
@@ -303,25 +306,24 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         f[diny3] = 1
         f[dinx4] = 1
         f[diny4] = 1
-
+    
         f[dout1] = 1
         f[dout3] = 1
-
-        f[dinx5] = -1                           # below
+    
+        f[dinx5] = -1  # below
         f[diny5] = -1
         f[dinx6] = -1
         f[diny6] = -1
         f[dinx7] = -1
         f[diny7] = -1
         f[dinx8] = -1
-        f[diny8 - 1] = -1
-
+        f[diny8] = -1
         f[dout2] = -1
         f[dout4] = -1
 
-        fixeddofs1 = np.arange((2 * (nely - a + 1 + 1) - 1), (2 * (nely + 1 - 1) - 1))  # Fixed degrees of freedom
-        fixeddofs2 = np.arange((2 * (nely - a + 1 + 1)), (2 * (nely + 1 - 1)))
-        fixeddofs = np.concatenate([[fixeddofs1], [fixeddofs2]])
+        fixeddofs1 = np.arange((2 * (nely - a + 1 + 1) - 1) - 1, (2 * (nely + 1 - 1) - 1))  # Fixed degrees of freedom
+        fixeddofs2 = np.arange((2 * (nely - a + 1 + 1) - 1), (2 * (nely + 1 - 1)))
+        fixeddofs = np.union1d(fixeddofs1, fixeddofs2)
     else:
         print("BC string should be a valid entry: 'MBB','L-Shape','Short_Cantiliever','Top_Rib'")
         sys.exit()
@@ -421,6 +423,7 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     tt = np.kron((np.ones(Xc.shape[0])),tt[np.newaxis].T).T
     cc = np.cos(tt)
     ss = np.sin(tt)
+    
     if 'kktnorm' == stopping_criteria:
         stop_cond = iteration < maxiteration and kktnorm > kkttol
     elif 'change' == stopping_criteria:
@@ -465,11 +468,9 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
     while stop_cond:
         iteration=iteration + 1
 
-        #Uses 1.6s
         ## Project component on DZ
         W,dW_dX,dW_dY,dW_dT,dW_dL,dW_dh=Wgp(ugp[:,0],ugp[:,1],Xg,p)
 
-        #Uses 0.3s
         if np.logical_or(settings=='GGP', settings=='MMC'):
             delta=     (np.sum(np.reshape(      W[idgp]*gauss_weight,(int(len(gauss_weight)/Ngp**2),1,         Ngp**2),order='F'),axis=2)/               np.sum(np.reshape(gauss_weight[np.newaxis].T,(int(len(gauss_weight)/Ngp**2),1,Ngp**2),order='F'),axis=2 )).T
             ddelta_dX= np.sum(np.reshape(dW_dX[:,idgp]*gauss_weight,(len(dW_dX),int(len(gauss_weight)/Ngp**2),Ngp**2),order='F'),axis=2)  /    np.ravel(np.sum(np.reshape(gauss_weight[np.newaxis].T,(int(len(gauss_weight)/Ngp**2),1,Ngp**2),order='F'),axis=2 ))
@@ -499,7 +500,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         else:
             sys.exit()
 
-        #Uses 0s
         ##Model Update
         E,dE,dE_dm=model_updateM(delta_c,p,X)
         rho,drho_ddelta,drho_dm=model_updateV(delta,p,X)
@@ -512,35 +512,16 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         drho_dY=drho_ddelta * ddelta_dY
         drho_dT=drho_ddelta * ddelta_dT
         drho_dL=drho_ddelta * ddelta_dL
-        
-        
-        drho_dh=drho_ddelta * ddelta_dh   
-
-
-
-
-
-
+        drho_dh=drho_ddelta * ddelta_dh
         xPhys = np.ravel(rho)
-        
         xPhys[emptyelts]=0
         xPhys[fullelts]=1
-
-
-
-
         xPhys = np.reshape(xPhys, (nelx, nely)).T
-        
-        
         E = np.ravel(E)
-
         E[emptyelts]=p['Emin']
         E[fullelts]=p['E0']
-
-
         E=np.reshape(E,(nelx,nely)).T
 
-        # Uses 0.8s
         ### FE ANALYSIS
         sK = np.ravel(np.ravel(KE)[np.newaxis] * np.ravel(E.T)[np.newaxis].T)
         K = scipy.sparse.coo_matrix((sK, (iK, jK)), shape=(ndof, ndof)).tocsc()
@@ -548,7 +529,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         U = np.zeros((ndof, 1))
         U[freedofs, 0] = scipy.sparse.linalg.spsolve(K, f[freedofs, 0])
 
-        # Uses 0s
         # Objective function and sensitivity    
         ce = np.reshape((np.dot(U[edofMat].reshape(nelx * nely, 8), KE) * U[edofMat].reshape(nelx * nely, 8)).sum(1),(nely,nelx),order='F')
         c = (E * ce).sum()                      #Objective function
@@ -595,10 +575,6 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
         fval=((v - volfrac) / volfrac) * 100
         df0dx=(np.ravel(dc) / (c + 1) * (np.ravel(upper_bound) - np.ravel(lower_bound)))
         dfdx=(np.ravel(dv).T / volfrac) * 100.0 * (np.ravel(upper_bound) - np.ravel(lower_bound)).T
-
-        # output Vectors
-        outvector1=[iteration,f0val,fval]
-        outvector2=xval
     
         # Print iteration results
         print("it.: {0} , obj.: {1:.3f} Vol.: {2:.3f}, kktnorm.: {3:.3f}  ch.: {4:.3f}".format( iteration, c, v ,kktnorm, change))
@@ -644,22 +620,17 @@ def main(nelx=None, nely=None, volfrac=None, settings=None, BC=None, maxiteratio
             
             fig.canvas.draw()
 
-        # Uses 1s
         ## MMA code optimization
         X,ymma,zmma,lam,xsi,eta,mu,zet,S,low,upp=mmasub(m,n,iteration,xval,xmin,xmax,xold1,xold2,f0val,df0dx,fval,dfdx,low,upp,a0,a,C,d)
 
-        # Uses 0s
         xold2=xold1
         xold1=xval
         xval=X
         Xg=lower_bound + (upper_bound - lower_bound) * X
         change=np.linalg.norm((xval - xold1))               # Updates change value
 
-        # Uses 0s
         ## The Residual Vector of the KKT conditions is calculated
         residu,kktnorm,residumax=kktcheck(m,n,X,ymma,zmma,lam,xsi,eta,mu,zet,S,xmin,xmax,df0dx,fval,dfdx,a0,a,C,d)
-        #outvector1=[iteration,f0val,fval]
-        #outvector2=xval
         
         # Updating stopping condition
         if 'kktnorm' == stopping_criteria:
@@ -776,11 +747,9 @@ def Wgp(x, y, Xc, p):
     jj = np.arange(0, len(X))
     I, J = np.meshgrid(ii, jj)
 
-    # Uses 0.06s
     xi = np.kron(np.ones(len(I)),x[np.newaxis].T).T
     yi = np.kron(np.ones(len(I)),y[np.newaxis].T).T
 
-    # Uses 0.4s
     rho = np.sqrt((X[J] - xi) ** 2 + (Y[J] - yi) ** 2)
     drho_dX = (X[J] - xi) / (rho + (rho == 0))
     drho_dY = (Y[J] - yi) / (rho + (rho == 0))
@@ -789,13 +758,11 @@ def Wgp(x, y, Xc, p):
     dphi_dY = (X[J] - xi) / (rho ** 2 + (rho == 0))
     dphi_dT = - np.ones((np.shape(J)))
 
-    # Uses 0.7s
     upsi = np.sqrt(rho ** 2 + L[J] ** 2 / 4 - rho * L[J] * abs(np.cos(phi))) * (((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4)) + np.logical_not(((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4)) * abs(rho * np.sin(phi))
     dupsi_drho = (2 * rho - L[J] * abs(np.cos(phi))) / 2 / (upsi + (upsi == 0)) * ((((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4))) + np.logical_not(((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4)) * abs(np.sin(phi))
     dupsi_dphi = (L[J] * rho * np.sign(np.cos(phi)) * np.sin(phi)) / 2 / (upsi + (upsi == 0)) * ((((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4))) + np.logical_not((((rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4))) * rho * np.sign(np.sin(phi)) * np.cos(phi)
     dupsi_dL = (L[J] / 2 - rho * abs(np.cos(phi))) / 2 / (upsi + (upsi == 0)) * np.logical_and(((( rho * np.cos(phi)) ** 2) >= (L[J] ** 2 / 4)), upsi != 0)
 
-    #Uses 0.5s
     if 'MMC' == p['method']:
         alp = p['alp']
         epsi = p['epsi']
@@ -915,8 +882,6 @@ def model_updateM(delta,p,X):
         dhatdelta_dm = p['gammac'] * np.multiply(delta, m ** (p['gammac'] - 1))
         dE_ddelta=p['penalty'] *(p['E0'] - p['Emin']) * dhatdelta_ddelta * drho_dhatdelta * rho ** (p['penalty'] - 1)
         dE_dm=p['penalty'] * (p['E0'] - p['Emin']) * dhatdelta_dm * drho_dhatdelta * rho ** (p['penalty'] - 1)
-
-
     elif 'GP' == p['method']:
         hatdelta= np.multiply(delta,m ** p['gammac'])
         E,dE_dhatdelta = Aggregation_Pi(hatdelta,p)
@@ -1007,30 +972,30 @@ def mmasub(m, n, iter, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx,
     #                xmin_j <= x_j <= xmax_j,    j = 1,...,n
     #                z >= 0,   y_i >= 0,         i = 1,...,m
     # *** INPUT:
-    #   m    = The number of general constraints.
-    #   n    = The number of variables x_j.
-    #  iter  = Current iteration number ( =1 the first time mmasub is called).
-    #  xval  = Column vector with the current values of the variables x_j.
-    #  xmin  = Column vector with the lower bounds for the variables x_j.
-    #  xmax  = Column vector with the upper bounds for the variables x_j.
-    #  xold1 = xval, one iteration ago (provided that iter>1).
-    #  xold2 = xval, two iterations ago (provided that iter>2).
-    #  f0val = The value of the objective function f_0 at xval.
-    #  df0dx = Column vector with the derivatives of the objective function
+    #   m (int)   = The number of general constraints.
+    #   n (int)   = The number of variables x_j.
+    #  iter (int) = Current iteration number ( =1 the first time mmasub is called).
+    #  xval (n,)  = Column vector with the current values of the variables x_j.
+    #  xmin (n,)  = Column vector with the lower bounds for the variables x_j.
+    #  xmax (n,)  = Column vector with the upper bounds for the variables x_j.
+    #  xold1 (n,) = xval, one iteration ago (provided that iter>1).
+    #  xold2 (n,) = xval, two iterations ago (provided that iter>2).
+    #  f0val(int) = The value of the objective function f_0 at xval.
+    #  df0dx (n,) = Column vector with the derivatives of the objective function
     #          f_0 with respect to the variables x_j, calculated at xval.
-    #  fval  = Column vector with the values of the constraint functions f_i,
+    #  fval (int) = Column vector with the values of the constraint functions f_i,
     #          calculated at xval.
-    #  dfdx  = (m x n)-matrix with the derivatives of the constraint functions
+    #  dfdx (n,)  = (m x n)-matrix with the derivatives of the constraint functions
     #          f_i with respect to the variables x_j, calculated at xval.
     #          dfdx(i,j) = the derivative of f_i with respect to x_j.
-    #  low   = Column vector with the lower asymptotes from the previous
+    #  low  (n,)  = Column vector with the lower asymptotes from the previous
     #          iteration (provided that iter>1).
-    #  upp   = Column vector with the upper asymptotes from the previous
+    #  upp  (n,)  = Column vector with the upper asymptotes from the previous
     #          iteration (provided that iter>1).
-    #  a0    = The constants a_0 in the term a_0*z.
-    #  a     = Column vector with the constants a_i in the terms a_i*z.
-    #  c     = Column vector with the constants c_i in the terms c_i*y_i.
-    #  d     = Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+    #  a0  (int)  = The constants a_0 in the term a_0*z.
+    #  a   (1,)   = Column vector with the constants a_i in the terms a_i*z.
+    #  c   (1,)   = Column vector with the constants c_i in the terms c_i*y_i.
+    #  d   (1,)   = Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
     # *** OUTPUT:
     #  xmma  = Column vector with the optimal values of the variables x_j
     #          in the current MMA subproblem.
@@ -1111,7 +1076,7 @@ def mmasub(m, n, iter, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx,
     Q = np.maximum(- dfdx, 0)
     PQ = 0.001 * (P + Q) + raa0 * np.ones(m) * xmamiinv.T
     P = P + PQ
-    Q = Q + PQ
+    Q = Q + PQ    
     P = P * scipy.sparse.spdiags(ux2, 0, n, n)
     Q = Q * scipy.sparse.spdiags(xl2, 0, n, n) 
     b = np.dot(P[np.newaxis],uxinv[np.newaxis].T)[0] + np.dot(Q[np.newaxis],xlinv[np.newaxis].T)[0] - fval
@@ -1368,11 +1333,11 @@ def kktcheck(m, n, x, y, z, lam, xsi, eta, mu, zet, s, xmin, xmax, df0dx, fval, 
 # The real main driver
 if __name__ == "__main__":
     # Input parameters
-    nelx=160
-    nely=40
-    volfrac=0.25
-    settings='MMC'          #Method:   'GGP'   'MMC'   'MNA'   'GP'
-    BC='Top_Rib'                #Boundary Conditions:  'MBB'  'Short_Cantiliever'  'L-Shape'  'Top_Rib'
+    nelx=60
+    nely=30
+    volfrac=0.4
+    settings='GGP'          #Method:   'GGP'   'MMC'   'MNA'   'GP'
+    BC='Short_Cantiliever'                #Boundary Conditions:  'MBB'  'Short_Cantiliever'  'L-Shape'  'Top_Rib'
     maxiteration=300
     if len(sys.argv)>1: nelx = int(sys.argv[1])
     if len(sys.argv)>2: nely = int(sys.argv[2])
